@@ -1,0 +1,17 @@
+import flash.printing.PrintJob;
+import flash.geom.Rectangle;
+
+var myPrintJob:PrintJob;
+
+
+
+private function printIt(e:MouseEvent) {
+				
+
+try {
+						myPrintJob = new PrintJob();
+						myPrintJob.start();
+						myPrintJob.addPage(myMovieclip,new Rectangle(100, 100, 412, 533));
+						myPrintJob.send();
+}					}
+					catch(i:Error){}

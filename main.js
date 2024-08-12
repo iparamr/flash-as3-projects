@@ -4,9 +4,14 @@ import ruffleLogo from '/ruffle.svg';
 const listItems = [
   {
     title: "Stoney Nakoda - Horse Widget",
-    link: "./horse-widget.html",
+    link: "./horse-widget/index.html",
     description: "Click on a part of the horse to hear the name in Stoney Nakoda and learn about horse anatomy! This interactive feature is brought to you by the Stoney Education Authority."
-  }
+  },
+  {
+    title: "Self Portraint",
+    link: "./sheridan-college/self-portrait/index.html",
+    description: "Flash Dynamic Spectrograph."
+  },
 ];
 
 document.querySelector('#app').innerHTML = `
