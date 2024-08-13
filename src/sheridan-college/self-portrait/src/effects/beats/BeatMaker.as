@@ -7,7 +7,7 @@
     import flash.geom.Matrix;
     import flash.geom.ColorTransform;
     import flash.utils.Timer;
-    import src.utilities.*;
+    import src.utilities.DynamicObject;
 
     public class BeatMaker extends Sprite
     {

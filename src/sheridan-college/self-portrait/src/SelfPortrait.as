@@ -1,11 +1,15 @@
 ﻿package src {
-    import flash.display.*;
-    import flash.events.*;
-    import flash.filters.*;
-    import flash.media.*;
-    import flash.net.*;
-    import src.effects.beats.*;
-    import src.interfaces.*;
+    import flash.display.MovieClip;
+    import flash.display.Sprite;
+    import flash.display.Loader;
+    import flash.events.Event;
+    import flash.events.KeyboardEvent;
+    import flash.filters.BlurFilter;
+    import flash.media.Sound;
+    import flash.media.SoundChannel;
+    import flash.net.URLRequest;
+    import src.effects.beats.BeatMaker;
+    import src.interfaces.Shuttle;
 
     public class SelfPortrait extends Sprite {
         private var beatMaker:BeatMaker;

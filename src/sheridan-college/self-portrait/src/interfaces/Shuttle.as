@@ -1,9 +1,12 @@
 ﻿package src.interfaces 
 {
-    import flash.display.*;
-    import flash.events.*;
-    import flash.media.*;
-    import flash.utils.*;
+    import flash.display.Sprite;
+    import flash.display.Stage;
+    import flash.events.KeyboardEvent;
+    import flash.media.Sound;
+    import flash.media.SoundChannel;
+    import flash.utils.Timer;
+    import flash.events.TimerEvent;
 
     public class Shuttle extends Sprite
     {

@@ -1,9 +1,9 @@
 ﻿package src.effects.beats 
 {
-    import flash.display.*;
-    import flash.events.*;
-    import flash.media.*;
-    import flash.utils.*;
+    import flash.display.Sprite;
+    import flash.events.Event;
+    import flash.media.SoundMixer;
+    import flash.utils.ByteArray;
     
     internal class SoundBeat extends Sprite
     {
