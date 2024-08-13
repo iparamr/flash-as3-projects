@@ -1,37 +1,27 @@
 ﻿package src.effects.beats 
 {
-    import flash.events.*;
+    import flash.events.Event;
     
-    internal class SoundBeatEvent extends flash.events.Event
+    internal class SoundBeatEvent extends Event
     {
-        public function SoundBeatEvent(arg1:String, arg2:Array, arg3:Boolean=false, arg4:Boolean=false)
+        public static const PROCESS_SOUND:String = "processsound";
+
+        public var processArray:Array;
+
+        public function SoundBeatEvent(type:String, processArray:Array, bubbles:Boolean = false, cancelable:Boolean = false)
         {
-            t = arg1;
-            b = arg3;
-            c = arg4;
-            super(t, b, c);
-            processArray = arg2;
-            return;
+            super(type, bubbles, cancelable);
+            this.processArray = processArray;
         }
 
-        public override function clone():flash.events.Event
+        public override function clone():Event
         {
-            return new SoundBeatEvent(t, processArray, b, c);
+            return new SoundBeatEvent(type, processArray, bubbles, cancelable);
         }
 
         public override function toString():String
         {
-            return formatToString("SoundBeatEvent", "type", "theArray", "bubbles", "cancelable", "eventPhase");
+            return formatToString("SoundBeatEvent", "type", "processArray", "bubbles", "cancelable", "eventPhase");
         }
-
-        public static const PROCESS_SOUND:String="processsound";
-
-        internal var b:Boolean;
-
-        internal var c:Boolean;
-
-        public var processArray:Array;
-
-        internal var t:String;
     }
 }

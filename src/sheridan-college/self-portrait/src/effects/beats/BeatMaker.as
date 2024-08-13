@@ -1,453 +1,369 @@
 ﻿package src.effects.beats 
 {
-    import flash.display.*;
-    import flash.events.*;
-    import flash.filters.*;
-    import flash.utils.*;
+    import flash.display.MovieClip;
+    import flash.display.Sprite;
+    import flash.events.MouseEvent;
+    import flash.events.TimerEvent;
+    import flash.geom.Matrix;
+    import flash.geom.ColorTransform;
+    import flash.utils.Timer;
     import src.utilities.*;
-    
-    public class BeatMaker extends flash.display.Sprite
+
+    public class BeatMaker extends Sprite
     {
-        public function BeatMaker(arg1:Class, arg2:Array, arg3:Number=1, arg4:Number=100, arg5:Boolean=true, arg6:Boolean=true)
+        private var myType:Array;
+        private var myFrequency:Boolean;
+        private var myClip:Class;
+        private var myBeats:Sprite;
+        private var menuArray:Array;
+        private var beatArray:Array;
+        private var myNumBeats:Number;
+        private var bList:Array;
+        private var myDragable:Boolean;
+        private var currentDrag:Object;
+        private var myHolder:Sprite;
+        private var myBeat:SoundBeat;
+        private var beatObject:Object;
+        private var myMenus:Sprite;
+        private var mySize:Number;
+        private var myTimer:Timer;
+
+        private static const BEAT_SPACING:Number = 10;
+
+        public function BeatMaker(clipClass:Class, typeArray:Array, numBeats:Number = 1, size:Number = 100, frequency:Boolean = true, dragable:Boolean = true)
         {
-            var loc1:*=undefined;
-            var loc2:*=0;
-            var loc3:*=undefined;
-            var loc4:*=undefined;
+            super();
+            initializeVariables(clipClass, typeArray, numBeats, size, frequency, dragable);
+            createBeats();
+            setBeatProperties();
+            setupTimer();
+            addChild(myHolder);
+            setupSoundBeat();
+        }
+
+        private function initializeVariables(clipClass:Class, typeArray:Array, numBeats:Number, size:Number, frequency:Boolean, dragable:Boolean):void
+        {
+            myClip = clipClass;
+            myNumBeats = numBeats;
+            mySize = size;
+            myType = typeArray;
+            myFrequency = frequency;
+            myDragable = dragable;
+            myHolder = new Sprite();
+            myBeats = new Sprite();
+            myMenus = new Sprite();
+            myHolder.addChild(myBeats);
+            myHolder.addChild(myMenus);
             beatArray = [];
             menuArray = [];
             bList = ["clip", "x", "y", "alpha", "color", "blendMode", "filters", "beatSize", "startSize"];
-            super();
-            myClip = arg1;
-            myNumBeats = arg3;
-            mySize = arg4;
-            myType = arg2;
-            myFrequency = arg5;
-            myDragable = arg6;
-            myHolder = new flash.display.Sprite();
-            myBeats = new flash.display.Sprite();
-            myMenus = new flash.display.Sprite();
-            myHolder.addChild(myBeats);
-            myHolder.addChild(myMenus);
-            loc1 = 10;
-            loc2 = 0;
-            while (loc2 < myNumBeats) 
+        }
+
+        private function createBeats():void
+        {
+            for (var i:int = 0; i < myNumBeats; i++) 
             {
-                loc3 = new myClip();
-                loc4 = new myClip();
-                loc3.x = loc1 * loc2;
-                loc4.x = loc1 * loc2;
-                loc4.alpha = 0;
-                beatArray.push(loc3);
-                menuArray.push(loc4);
-                myBeats.addChild(loc3);
-                myMenus.addChild(loc4);
+                var beat:MovieClip = new myClip();
+                var menu:MovieClip = new myClip();
+                beat.x = BEAT_SPACING * i;
+                menu.x = BEAT_SPACING * i;
+                menu.alpha = 0;
+                beatArray.push(beat);
+                menuArray.push(menu);
+                myBeats.addChild(beat);
+                myMenus.addChild(menu);
                 if (myDragable) 
                 {
-                    loc4.addEventListener(flash.events.MouseEvent.MOUSE_DOWN, drag);
-                    loc4.addEventListener(flash.events.MouseEvent.MOUSE_UP, drop);
-                    loc4.buttonMode = true;
-                    loc4.mate = loc3;
+                    setupDragAndDrop(menu);
                 }
-                loc3.num = loc2;
-                loc4.num = loc2;
-                ++loc2;
+                beat.num = i;
+                menu.num = i;
             }
-            setBeatProperties();
-            myTimer = new flash.utils.Timer(50, 0);
-            myTimer.addEventListener(flash.events.TimerEvent.TIMER, follow);
-            addChild(myHolder);
+        }
+
+        private function setupDragAndDrop(menu:MovieClip):void
+        {
+            menu.addEventListener(MouseEvent.MOUSE_DOWN, drag);
+            menu.addEventListener(MouseEvent.MOUSE_UP, drop);
+            menu.buttonMode = true;
+            menu.mate = beatArray[menu.num];
+        }
+
+        private function setupTimer():void
+        {
+            myTimer = new Timer(50);
+            myTimer.addEventListener(TimerEvent.TIMER, follow);
+        }
+
+        private function setupSoundBeat():void
+        {
             myBeat = new SoundBeat(myNumBeats, myFrequency, mySize, mySize + 10);
             myBeat.addEventListener(SoundBeatEvent.PROCESS_SOUND, processBeat);
-            return;
         }
 
-        internal function drag(arg1:flash.events.MouseEvent):*
+        private function drag(event:MouseEvent):void
         {
-            var loc1:*=undefined;
-            loc1 = arg1.target.parent;
-            loc1.setChildIndex(arg1.target, (loc1.numChildren - 1));
-            arg1.target.startDrag();
-            currentDrag = arg1.target;
+            var target:Sprite = event.target as Sprite;
+            target.parent.setChildIndex(target, target.parent.numChildren - 1);
+            target.startDrag();
+            currentDrag = target;
             myTimer.start();
-            return;
         }
 
-        public function setBeat(arg1:String, arg2:Number, arg3:Object):*
+        public function setBeat(property:String, index:Number, value:Object):void
         {
-            var loc1:*=undefined;
-            if (beatObject[arg1]) 
+            if (beatObject[property]) 
             {
-                if (arg2 < myNumBeats) 
+                if (index < myNumBeats) 
                 {
-                    beatObject[arg1][arg2] = arg3;
-                    if (arg1 == "x" || arg1 == "y") 
+                    beatObject[property][index] = value;
+                    if (property == "x" || property == "y") 
                     {
-                        beatArray[arg2][arg1] = arg3;
-                        menuArray[arg2][arg1] = arg3;
+                        beatArray[index][property] = value;
+                        menuArray[index][property] = value;
                     }
-                    else if (arg1 != "color") 
+                    else if (property == "color" && value != null) 
                     {
-                        if (arg1 == "filters" || arg1 == "blendMode" || arg1 == "alpha") 
-                        {
-                            beatArray[arg2][arg1] = arg3;
-                        }
-                        else if (arg1 == "clip") 
-                        {
-                            setClip(arg2, arg3);
-                        }
+                        var colorTransform:ColorTransform = beatArray[index].transform.colorTransform;
+                        colorTransform.color = uint(value);
+                        beatArray[index].transform.colorTransform = colorTransform;
                     }
-                    else if (arg3 != null) 
+                    else if (property == "filters" || property == "blendMode" || property == "alpha") 
                     {
-                        (loc1 = beatArray[arg2].transform.colorTransform).color = uint(arg3);
-                        beatArray[arg2].transform.colorTransform = loc1;
+                        beatArray[index][property] = value;
+                    }
+                    else if (property == "clip") 
+                    {
+                        setClip(index, value);
                     }
                 }
             }
-            return;
         }
 
-        public function setBeatObject(arg1:Object):*
+        public function setBeatObject(beatObj:Object):void
         {
-            var loc1:*=0;
-            var loc2:*=undefined;
-            var loc3:*=0;
-            var loc4:*=undefined;
-            var loc5:*=undefined;
-            beatObject = arg1;
-            loc1 = 0;
-            while (loc1 < bList.length) 
+            beatObject = beatObj;
+            for (var i:int = 0; i < bList.length; i++) 
             {
-                loc2 = bList[loc1];
-                loc3 = 0;
-                while (loc3 < myNumBeats) 
+                var property:String = bList[i];
+                for (var j:int = 0; j < myNumBeats; j++) 
                 {
-                    if ((loc4 = beatObject[loc2][loc3]) !== "") 
+                    var value:Object = beatObject[property][j];
+                    if (value !== "") 
                     {
-                        if (loc2 == "x" || loc2 == "y") 
+                        if (property == "x" || property == "y") 
                         {
-                            beatArray[loc3][loc2] = loc4;
-                            menuArray[loc3][loc2] = loc4;
+                            beatArray[j][property] = value;
+                            menuArray[j][property] = value;
                         }
-                        else if (loc2 != "color") 
+                        else if (property == "color" && value != null) 
                         {
-                            if (loc2 == "filters" || loc2 == "blendMode" || loc2 == "alpha") 
-                            {
-                                if (loc4) 
-                                {
-                                    beatArray[loc3][loc2] = loc4;
-                                }
-                            }
-                            else if (loc2 == "clip") 
-                            {
-                                setClip(loc3, loc4);
-                            }
+                            var colorTransform:ColorTransform = beatArray[j].transform.colorTransform;
+                            colorTransform.color = uint(value);
+                            beatArray[j].transform.colorTransform = colorTransform;
                         }
-                        else if (loc4 != null) 
+                        else if (property == "filters" || property == "blendMode" || property == "alpha") 
                         {
-                            (loc5 = beatArray[loc3].transform.colorTransform).color = uint(loc4);
-                            beatArray[loc3].transform.colorTransform = loc5;
+                            beatArray[j][property] = value;
+                        }
+                        else if (property == "clip") 
+                        {
+                            setClip(j, value);
                         }
                     }
-                    ++loc3;
                 }
-                ++loc1;
             }
-            return;
         }
 
-        public function recordBeat():*
+        public function recordBeat():String
         {
-            var loc1:*=undefined;
-            var loc2:*=undefined;
-            var loc3:*=0;
-            var loc4:*=undefined;
-            var loc5:*=undefined;
-            loc1 = "myBeats.setBeatObject({\n\t\t\t\t\t";
-            loc2 = src.utilities.DynamicObject.copy(beatObject);
-            loc3 = 0;
-            while (loc3 < myNumBeats) 
+            var result:String = "myBeats.setBeatObject({\n\t\t\t\t\t";
+            var copiedBeatObject:Object = DynamicObject.copy(beatObject);
+            for (var i:int = 0; i < myNumBeats; i++) 
             {
-                if ((loc4 = beatObject["clip"][loc3].toString().split(" ")).length > 1) 
+                var clipValue:String = beatObject["clip"][i].toString().split(" ")[1] || "";
+                copiedBeatObject["clip"][i] = clipValue.substr(0, clipValue.length - 1);
+                if (beatObject["filters"][i]) 
                 {
-                    loc4 = loc4[1].substr(0, -1);
+                    var filterValue:String = beatObject["filters"][i].toString().split(" ")[1] || "";
+                    copiedBeatObject["filters"][i] = filterValue ? "[new " + filterValue.substr(0, filterValue.length - 1) + "()]" : "";
+                }
+            }
+            for (var j:int = 0; j < bList.length; j++) 
+            {
+                var property:String = bList[j];
+                if (property != "blendMode") 
+                {
+                    result += property + ":[" + copiedBeatObject[property].join(",") + "],\n\t\t\t\t\t";
                 }
                 else 
                 {
-                    loc4 = "";
+                    result += property + ":[\'" + copiedBeatObject[property].join("\',\'") + "\'],\n\t\t\t\t\t";
                 }
-                loc2["clip"][loc3] = loc4;
-                if (beatObject["filters"][loc3]) 
-                {
-                    if ((loc4 = beatObject["filters"][loc3].toString().split(" ")).length > 1) 
-                    {
-                        loc4 = "[new " + loc4[1].substr(0, -1) + "()]";
-                    }
-                    else 
-                    {
-                        loc4 = "";
-                    }
-                }
-                else 
-                {
-                    loc4 = "";
-                }
-                loc2["filters"][loc3] = loc4;
-                ++loc3;
             }
-            loc3 = 0;
-            while (loc3 < bList.length) 
-            {
-                if ((loc5 = bList[loc3]) != "blendMode") 
-                {
-                    loc1 = loc1 + (loc5 + ":[" + loc2[loc5].join(","));
-                    loc1 = loc1 + "],\n\t\t\t\t\t";
-                }
-                else 
-                {
-                    loc1 = loc1 + (loc5 + ":[\'" + loc2[loc5].join("\',\'"));
-                    loc1 = loc1 + "\'],\n\t\t\t\t\t";
-                }
-                ++loc3;
-            }
-            loc1 = loc1.substr(0, loc1.length - 7);
-            loc1 = loc1 + "\n\t\t\t\t\t});";
-            trace(loc1);
-            return;
+            result = result.substr(0, result.length - 7);
+            result += "\n\t\t\t\t\t});";
+            trace(result);
+            return result;
         }
 
-        public function getBeatAt(arg1:Number):*
+        public function getBeatAt(index:Number):Sprite
         {
-            return beatArray[arg1];
+            return beatArray[index];
         }
 
-        public function getBeatObject():*
+        public function getBeatObject():Object
         {
             return beatObject;
         }
 
-        internal function follow(arg1:flash.events.TimerEvent):*
+        private function follow(event:TimerEvent):void
         {
             currentDrag.mate.x = currentDrag.x;
             currentDrag.mate.y = currentDrag.y;
-            arg1.updateAfterEvent();
-            return;
+            event.updateAfterEvent();
         }
 
-        internal function processBeat(arg1:SoundBeatEvent):*
+        private function processBeat(event:SoundBeatEvent):void
         {
-            var loc1:*=NaN;
-            var loc2:*=NaN;
-            var loc3:*=0;
-            var loc4:*=undefined;
-            var loc5:*=undefined;
-            loc3 = 0;
-            while (loc3 < arg1.processArray.length) 
+            for (var i:int = 0; i < event.processArray.length; i++) 
             {
-                loc4 = beatObject["startSize"][loc3];
-                loc5 = beatObject["beatSize"][loc3] - loc4;
+                var startSize:Number = beatObject["startSize"][i];
+                var beatSizeDiff:Number = beatObject["beatSize"][i] - startSize;
                 if (myType[0] && myType[1]) 
                 {
-                    if (menuArray[loc3].width > menuArray[loc3].height) 
+                    if (menuArray[i].width > menuArray[i].height) 
                     {
-                        loc1 = menuArray[loc3].width;
-                        beatArray[loc3].width = loc4 + arg1.processArray[loc3] * loc5 / mySize;
-                        beatArray[loc3].height = menuArray[loc3].height * beatArray[loc3].width / loc1;
+                        var originalWidth:Number = menuArray[i].width;
+                        beatArray[i].width = startSize + event.processArray[i] * beatSizeDiff / mySize;
+                        beatArray[i].height = menuArray[i].height * beatArray[i].width / originalWidth;
                     }
                     else 
                     {
-                        loc2 = menuArray[loc3].height;
-                        beatArray[loc3].height = loc4 + arg1.processArray[loc3] * loc5 / mySize;
-                        beatArray[loc3].width = menuArray[loc3].width * beatArray[loc3].height / loc2;
+                        var originalHeight:Number = menuArray[i].height;
+                        beatArray[i].height = startSize + event.processArray[i] * beatSizeDiff / mySize;
+                        beatArray[i].width = menuArray[i].width * beatArray[i].height / originalHeight;
                     }
                 }
                 else 
                 {
                     if (myType[0]) 
                     {
-                        beatArray[loc3].width = loc4 + arg1.processArray[loc3] * loc5 / mySize;
+                        beatArray[i].width = startSize + event.processArray[i] * beatSizeDiff / mySize;
                     }
                     if (myType[1]) 
                     {
-                        beatArray[loc3].height = loc4 + arg1.processArray[loc3] * loc5 / mySize;
+                        beatArray[i].height = startSize + event.processArray[i] * beatSizeDiff / mySize;
                     }
                 }
                 if (myType[2]) 
                 {
-                    beatArray[loc3].alpha = (loc4 + arg1.processArray[loc3] * loc5) / beatObject["beatSize"][loc3] / mySize;
-                }
-                ++loc3;
-            }
-            return;
-        }
-
-        public function toggleDisplay():*
-        {
-            var loc1:*=0;
-            if (menuArray[0].alpha) 
-            {
-                loc1 = 0;
-                while (loc1 < menuArray.length) 
-                {
-                    menuArray[loc1].alpha = 0;
-                    ++loc1;
+                    beatArray[i].alpha = (startSize + event.processArray[i] * beatSizeDiff) / beatObject["beatSize"][i] / mySize;
                 }
             }
-            else 
-            {
-                loc1 = 0;
-                while (loc1 < menuArray.length) 
-                {
-                    menuArray[loc1].alpha = 0.5;
-                    ++loc1;
-                }
-            }
-            return;
         }
 
-        internal function setBeatProperties():*
+        public function toggleDisplay():void
         {
-            var loc1:*=undefined;
-            var loc2:*=0;
-            loc1 = {};
-            loc2 = 0;
-            while (loc2 < bList.length) 
+            var newAlpha:Number = menuArray[0].alpha ? 0 : 0.5;
+            for (var i:int = 0; i < menuArray.length; i++) 
             {
-                loc1[bList[loc2]] = [];
-                ++loc2;
+                menuArray[i].alpha = newAlpha;
             }
-            loc2 = 0;
-            while (loc2 < myNumBeats) 
-            {
-                loc1.clip.push(myClip);
-                loc1.x.push(beatArray[loc2].x);
-                loc1.y.push(beatArray[loc2].y);
-                loc1.alpha.push(1);
-                loc1.color.push(null);
-                loc1.blendMode.push(null);
-                loc1.filters.push([]);
-                loc1.beatSize.push(mySize);
-                loc1.startSize.push(0);
-                ++loc2;
-            }
-            beatObject = loc1;
-            return;
         }
 
-        internal function setClip(arg1:Number, arg2:Object):*
+        private function setBeatProperties():void
         {
-            var loc1:*=undefined;
-            var loc2:*=undefined;
-            var loc3:*=undefined;
-            if (!arg2) 
+            var properties:Object = {};
+            for (var i:int = 0; i < bList.length; i++) 
+            {
+                properties[bList[i]] = [];
+            }
+            for (var j:int = 0; j < myNumBeats; j++) 
+            {
+                properties.clip.push(myClip);
+                properties.x.push(beatArray[j].x);
+                properties.y.push(beatArray[j].y);
+                properties.alpha.push(1);
+                properties.color.push(null);
+                properties.blendMode.push(null);
+                properties.filters.push([]);
+                properties.beatSize.push(mySize);
+                properties.startSize.push(0);
+            }
+            beatObject = properties;
+        }
+
+        private function setClip(index:Number, clipClass:Object):void
+        {
+            if (!clipClass) 
             {
                 return;
             }
-            loc1 = beatArray[arg1].transform.matrix;
-            loc2 = new arg2();
-            loc3 = new arg2();
+            var originalMatrix:Matrix = beatArray[index].transform.matrix;
+            var newBeat:MovieClip = new clipClass();
+            var newMenu:MovieClip = new clipClass();
             if (myDragable) 
             {
-                menuArray[arg1].removeEventListener(flash.events.MouseEvent.MOUSE_DOWN, drag);
-                menuArray[arg1].removeEventListener(flash.events.MouseEvent.MOUSE_UP, drop);
+                menuArray[index].removeEventListener(MouseEvent.MOUSE_DOWN, drag);
+                menuArray[index].removeEventListener(MouseEvent.MOUSE_UP, drop);
             }
-            myBeats.removeChild(beatArray[arg1]);
-            myMenus.removeChild(menuArray[arg1]);
-            beatArray[arg1] = loc2;
-            menuArray[arg1] = loc3;
-            loc2.transform.matrix = loc1;
-            loc3.transform.matrix = loc1;
-            loc3.alpha = 0;
-            myBeats.addChild(loc2);
-            myMenus.addChild(loc3);
+            myBeats.removeChild(beatArray[index]);
+            myMenus.removeChild(menuArray[index]);
+            beatArray[index] = newBeat;
+            menuArray[index] = newMenu;
+            newBeat.transform.matrix = originalMatrix;
+            newMenu.transform.matrix = originalMatrix;
+            newMenu.alpha = 0;
+            myBeats.addChild(newBeat);
+            myMenus.addChild(newMenu);
             if (myDragable) 
             {
-                loc3.addEventListener(flash.events.MouseEvent.MOUSE_DOWN, drag);
-                loc3.addEventListener(flash.events.MouseEvent.MOUSE_UP, drop);
-                loc3.buttonMode = true;
-                loc3.mate = loc2;
+                newMenu.addEventListener(MouseEvent.MOUSE_DOWN, drag);
+                newMenu.addEventListener(MouseEvent.MOUSE_UP, drop);
+                newMenu.buttonMode = true;
+                newMenu.mate = newBeat;
             }
-            loc2.num = arg1;
-            loc3.num = arg1;
-            return;
+            newBeat.num = index;
+            newMenu.num = index;
         }
 
-        public function setAllBeats(arg1:String, arg2:Object):*
+        public function setAllBeats(property:String, value:Object):void
         {
-            var loc1:*=0;
-            var loc2:*=undefined;
-            if (beatObject[arg1]) 
+            if (beatObject[property]) 
             {
-                loc1 = 0;
-                while (loc1 < beatArray.length) 
+                for (var i:int = 0; i < beatArray.length; i++) 
                 {
-                    beatObject[arg1][loc1] = arg2;
-                    if (arg1 == "x" || arg1 == "y") 
+                    beatObject[property][i] = value;
+                    if (property == "x" || property == "y") 
                     {
-                        beatArray[loc1][arg1] = arg2;
-                        menuArray[loc1][arg1] = arg2;
+                        beatArray[i][property] = value;
+                        menuArray[i][property] = value;
                     }
-                    else if (arg1 != "color") 
+                    else if (property == "color" && value != null) 
                     {
-                        if (arg1 == "filters" || arg1 == "blendMode" || arg1 == "alpha") 
-                        {
-                            beatArray[loc1][arg1] = arg2;
-                        }
-                        else if (arg1 == "clip") 
-                        {
-                            setClip(loc1, arg2);
-                        }
+                        var colorTransform:ColorTransform = beatArray[i].transform.colorTransform;
+                        colorTransform.color = uint(value);
+                        beatArray[i].transform.colorTransform = colorTransform;
                     }
-                    else if (arg2 != null) 
+                    else if (property == "filters" || property == "blendMode" || property == "alpha") 
                     {
-                        (loc2 = beatArray[loc1].transform.colorTransform).color = uint(arg2);
-                        beatArray[loc1].transform.colorTransform = loc2;
+                        beatArray[i][property] = value;
                     }
-                    ++loc1;
+                    else if (property == "clip") 
+                    {
+                        setClip(i, value);
+                    }
                 }
             }
-            return;
         }
 
-        internal function drop(arg1:flash.events.MouseEvent):*
+        private function drop(event:MouseEvent):void
         {
-            arg1.currentTarget.stopDrag();
+            event.currentTarget.stopDrag();
             beatObject["x"][currentDrag.num] = currentDrag.x;
             beatObject["y"][currentDrag.num] = currentDrag.y;
             myTimer.stop();
-            return;
         }
-
-        internal var myType:Array;
-
-        internal var myFrequency:Boolean;
-
-        internal var myClip:Class;
-
-        internal var myBeats:flash.display.Sprite;
-
-        internal var menuArray:Array;
-
-        internal var beatArray:Array;
-
-        internal var myNumBeats:Number;
-
-        internal var bList:Array;
-
-        internal var myDragable:Boolean;
-
-        internal var currentDrag:Object;
-
-        internal var myHolder:flash.display.Sprite;
-
-        internal var myBeat:SoundBeat;
-
-        internal var beatObject:Object;
-
-        internal var myMenus:flash.display.Sprite;
-
-        internal var mySize:Number;
-
-        internal var myTimer:*;
     }
 }

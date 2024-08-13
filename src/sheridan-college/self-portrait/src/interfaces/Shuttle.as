@@ -2,147 +2,146 @@
 {
     import flash.display.*;
     import flash.events.*;
-    import flash.geom.*;
     import flash.media.*;
     import flash.utils.*;
-    
-    public class Shuttle extends flash.display.Sprite
+
+    public class Shuttle extends Sprite
     {
-        public function Shuttle(arg1:Object, arg2:flash.media.Sound, arg3:flash.media.SoundChannel, arg4:Number=100, arg5:Number=2000)
+        private const KEY_RIGHT:uint = 39;
+        private const KEY_LEFT:uint = 37;
+        private const KEY_SPACE:uint = 32;
+
+        private var backwardTimer:Timer;
+        private var forwardTimer:Timer;
+        private var pausePos:Number;
+        private var myChannel:SoundChannel;
+        private var mySound:Sound;
+        private var mySegment:Number;
+        private var myJump:Number;
+
+        private var forwardCheck:Boolean = false;
+        private var backwardCheck:Boolean = false;
+        private var pauseCheck:Boolean = false;
+
+        public function Shuttle(stage:Stage, sound:Sound, channel:SoundChannel, segment:Number = 100, jump:Number = 2000)
         {
-            forwardCheck = false;
-            backwardCheck = false;
-            pauseCheck = false;
             super();
-            mySound = arg2;
-            myChannel = arg3;
-            mySegment = arg4;
-            myJump = arg5;
-            arg1.stage.addEventListener(flash.events.KeyboardEvent.KEY_DOWN, keyDownHandler);
-            arg1.stage.addEventListener(flash.events.KeyboardEvent.KEY_UP, keyUpHandler);
-            return;
+            mySound = sound;
+            myChannel = channel;
+            mySegment = segment;
+            myJump = jump;
+            // Add keyboard event listeners
+            stage.addEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler);
+            stage.addEventListener(KeyboardEvent.KEY_UP, keyUpHandler);
         }
 
-        public function dispose():*
+        public function dispose():void
         {
-            flash.utils.clearInterval(forwardID);
-            flash.utils.clearInterval(backwardID);
-            stage.removeEventListener(flash.events.KeyboardEvent.KEY_DOWN, keyDownHandler);
-            stage.removeEventListener(flash.events.KeyboardEvent.KEY_UP, keyUpHandler);
-            return;
+            // Clear timers and remove event listeners
+            clearTimers();
+            stage.removeEventListener(KeyboardEvent.KEY_DOWN, keyDownHandler);
+            stage.removeEventListener(KeyboardEvent.KEY_UP, keyUpHandler);
         }
 
-        internal function keyDownHandler(arg1:flash.events.KeyboardEvent):*
+        private function keyDownHandler(event:KeyboardEvent):void
         {
-            if (arg1.keyCode != 39) 
+            switch (event.keyCode)
             {
-                if (arg1.keyCode == 37) 
-                {
-                    if (backwardCheck) 
-                    {
-                        return;
-                    }
-                    if (pauseCheck) 
-                    {
-                        pauseCheck = false;
-                        myChannel = mySound.play(pausePos);
-                    }
-                    backwardCheck = true;
-                    forwardCheck = false;
-                    flash.utils.clearInterval(forwardID);
-                    flash.utils.clearInterval(backwardID);
-                    moveSound(-1);
-                    backwardID = flash.utils.setInterval(moveSound, mySegment, -1);
-                }
+                case KEY_RIGHT:
+                    handleDirection(1);
+                    break;
+                case KEY_LEFT:
+                    handleDirection(-1);
+                    break;
             }
-            else 
-            {
-                if (forwardCheck) 
-                {
-                    return;
-                }
-                if (pauseCheck) 
-                {
-                    pauseCheck = false;
-                    myChannel = mySound.play(pausePos);
-                }
-                forwardCheck = true;
-                backwardCheck = false;
-                flash.utils.clearInterval(forwardID);
-                flash.utils.clearInterval(backwardID);
-                moveSound(1);
-                forwardID = flash.utils.setInterval(moveSound, mySegment, 1);
-            }
-            return;
         }
 
-        internal function keyUpHandler(arg1:flash.events.KeyboardEvent):*
+        private function keyUpHandler(event:KeyboardEvent):void
         {
-            if (arg1.keyCode != 39) 
+            if (event.keyCode == KEY_SPACE)
             {
-                if (arg1.keyCode != 37) 
-                {
-                    if (arg1.keyCode == 32) 
-                    {
-                        flash.utils.clearInterval(backwardID);
-                        flash.utils.clearInterval(forwardID);
-                        backwardCheck = false;
-                        forwardCheck = false;
-                        if (pauseCheck) 
-                        {
-                            pauseCheck = false;
-                            myChannel = mySound.play(pausePos);
-                        }
-                        else 
-                        {
-                            pausePos = myChannel.position;
-                            pauseCheck = true;
-                            myChannel.stop();
-                        }
-                    }
-                }
-                else 
-                {
-                    flash.utils.clearInterval(backwardID);
-                    backwardCheck = false;
-                }
+                togglePause();
             }
-            else 
+            else if (event.keyCode == KEY_RIGHT)
             {
-                flash.utils.clearInterval(forwardID);
+                if (forwardTimer) forwardTimer.stop();
                 forwardCheck = false;
             }
-            return;
+            else if (event.keyCode == KEY_LEFT)
+            {
+                if (backwardTimer) backwardTimer.stop();
+                backwardCheck = false;
+            }
         }
 
-        internal function moveSound(arg1:Number):*
+        private function handleDirection(direction:int):void
         {
-            soundPos = myChannel.position + myJump * arg1;
+            // Prevent redundant actions
+            if ((direction == 1 && forwardCheck) || (direction == -1 && backwardCheck))
+            {
+                return;
+            }
+
+            // Resume from pause if necessary
+            if (pauseCheck)
+            {
+                pauseCheck = false;
+                myChannel = mySound.play(pausePos);
+            }
+
+            // Set direction flags
+            forwardCheck = (direction == 1);
+            backwardCheck = (direction == -1);
+
+            // Clear existing timers and start moving sound
+            clearTimers();
+            moveSound(direction);
+            if (direction == 1)
+            {
+                forwardTimer = new Timer(mySegment);
+                forwardTimer.addEventListener(TimerEvent.TIMER, function():void { moveSound(direction); });
+                forwardTimer.start();
+            }
+            else
+            {
+                backwardTimer = new Timer(mySegment);
+                backwardTimer.addEventListener(TimerEvent.TIMER, function():void { moveSound(direction); });
+                backwardTimer.start();
+            }
+        }
+
+        private function togglePause():void
+        {
+            // Clear timers and toggle pause state
+            clearTimers();
+            forwardCheck = false;
+            backwardCheck = false;
+
+            if (pauseCheck)
+            {
+                pauseCheck = false;
+                myChannel = mySound.play(pausePos);
+            }
+            else
+            {
+                pausePos = myChannel.position;
+                pauseCheck = true;
+                myChannel.stop();
+            }
+        }
+
+        private function clearTimers():void
+        {
+            if (forwardTimer) forwardTimer.stop();
+            if (backwardTimer) backwardTimer.stop();
+        }
+
+        private function moveSound(direction:int):void
+        {
+            // Calculate new sound position and play from there
+            var soundPos:Number = myChannel.position + myJump * direction;
             myChannel.stop();
             myChannel = mySound.play(Math.max(Math.min(soundPos, mySound.length), 0));
-            return;
         }
-
-        internal var backwardID:Number;
-
-        internal var forwardCheck:Boolean=false;
-
-        internal var pausePos:Number;
-
-        internal var forwardID:Number;
-
-        internal var myChannel:flash.media.SoundChannel;
-
-        internal var pauseCheck:Boolean=false;
-
-        internal var mySound:flash.media.Sound;
-
-        internal var soundPos:Number;
-
-        internal var backwardCheck:Boolean=false;
-
-        internal var mySegment:Number;
-
-        internal var myJump:Number;
     }
 }

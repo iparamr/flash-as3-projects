@@ -1,22 +1,20 @@
 ﻿package src.utilities 
 {
-    import flash.utils.*;
+    import flash.utils.ByteArray;
     
-    public class DynamicObject extends Object
+    public class DynamicObject 
     {
         public function DynamicObject()
         {
             super();
-            return;
         }
 
-        public static function copy(arg1:Object):*
+        public static function copy(source:Object):*
         {
-            var loc1:*=null;
-            loc1 = new flash.utils.ByteArray();
-            loc1.writeObject(arg1);
-            loc1.position = 0;
-            return loc1.readObject();
+            var byteArray:ByteArray = new ByteArray();
+            byteArray.writeObject(source);
+            byteArray.position = 0;
+            return byteArray.readObject();
         }
     }
 }
