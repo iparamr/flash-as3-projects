@@ -8,7 +8,7 @@ package src {
 
 	public class Environment extends MovieClip {
 		
-		// Please put your name here: 
+		// Please put your name here: Param Randhawa
 		
 		// WEB AUTHORING BUILD-IT EXAM - 3HRS
 		

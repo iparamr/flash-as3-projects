@@ -13,6 +13,11 @@ const listItems = [
     description: "Flash Dynamic Spectrograph."
   },
   {
+    title: "Sushi Exam",
+    link: "./sheridan-college/sushi/index.html",
+    description: "Web Authoring Build-It Exam"
+  },
+  {
     title: "Environment Exam",
     link: "./sheridan-college/environment/index.html",
     description: "Web Authoring Build-It Exam"
