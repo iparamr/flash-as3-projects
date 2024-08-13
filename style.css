@@ -36,10 +36,9 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 500px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
 }
 
 .logo {
@@ -58,6 +57,10 @@ h1 {
 
 .read-the-docs {
   color: #888;
+}
+
+.list {
+  padding: 0;
 }
 
 button {

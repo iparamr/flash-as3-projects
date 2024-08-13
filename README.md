@@ -9,8 +9,8 @@ Ruffle is a Flash Player emulator written in Rust. It allows you to play Flash c
 ## Projects
 
 - **Stoney Nakoda - Horse Widget**: Click on a part of the horse to hear the name in Stoney Nakoda and learn about horse anatomy!
-- **Project 2**: Description of project 2.
-- **Project 3**: Description of project 3.
+- **Self Portrait**: Flash Dynamic Spectrograph.
+- **Environment Exam**: Web Authoring Build-It Exam.
 
 ## How to Use
 

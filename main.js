@@ -12,6 +12,11 @@ const listItems = [
     link: "./sheridan-college/self-portrait/index.html",
     description: "Flash Dynamic Spectrograph."
   },
+  {
+    title: "Environment Exam",
+    link: "./sheridan-college/environment/index.html",
+    description: "Web Authoring Build-It Exam"
+  },
 ];
 
 document.querySelector('#app').innerHTML = `
@@ -23,7 +28,7 @@ document.querySelector('#app').innerHTML = `
     <p class="read-the-docs">
       Click on the Ruffle logo to learn more
     </p>
-    <ol>
+    <ol class="list">
       ${listItems.map(item => `
         <li>
           <a href="${item.link}">${item.title}</a>
